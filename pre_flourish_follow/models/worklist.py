@@ -81,4 +81,4 @@ class PreFlourishWorkList(SiteModelMixin, SearchSlugModelMixin, BaseUuidModel):
 
     class Meta:
         app_label = 'pre_flourish_follow'
-        verbose_name = 'Worklist'
+        verbose_name = 'Pre Flourish Worklist'

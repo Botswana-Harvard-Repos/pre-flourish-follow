@@ -81,35 +81,45 @@ class WorkListModelWrapper(ModelWrapper):
     @property
     def log_entries(self):
         wrapped_entries = []
+        
+        #FIXME: Call is empty, was throwing an exception. A check was added, as a temp fix
+        
         call = PreFlourishCall.objects.filter(
             subject_identifier=self.object.subject_identifier).order_by('scheduled').last()
-        log_entries = PreFlourishLogEntry.objects.filter(
-            log__call__subject_identifier=call.subject_identifier).order_by('-call_datetime')[:3]
-        for log_entry in log_entries:
-            wrapped_entries.append(
-                LogEntryModelWrapper(log_entry))
+        
+        if call:
+            log_entries = PreFlourishLogEntry.objects.filter(
+                log__call__subject_identifier=call.subject_identifier).order_by('-call_datetime')[:3]
+            for log_entry in log_entries:
+                wrapped_entries.append(
+                    LogEntryModelWrapper(log_entry))
         return wrapped_entries
 
     @property
     def home_visit_log_entries(self):
-        in_person_log = getattr(self.object, 'inpersonlog')
+
         wrapped_entries = []
-        log_entries = PreFlourishInPersonContactAttempt.objects.filter(
-            in_person_log=in_person_log)
-        for log_entry in log_entries:
-            wrapped_entries.append(
-                InPersonContactAttemptModelWrapper(log_entry))
+        if hasattr(self.object, 'inpersonlog'):
+            in_person_log = getattr(self.object, 'inpersonlog')
+            log_entries = PreFlourishInPersonContactAttempt.objects.filter(
+                in_person_log=in_person_log)
+            for log_entry in log_entries:
+                wrapped_entries.append(
+                    InPersonContactAttemptModelWrapper(log_entry))
 
         return wrapped_entries
 
     @property
     def home_visit_log_entry(self):
-        in_person_log = getattr(self.object, 'inpersonlog')
-        log_entry = PreFlourishInPersonContactAttempt(
-            in_person_log=in_person_log,
-            prev_study=self.prev_protocol,
-            study_maternal_identifier=self.study_maternal_identifier)
-        return InPersonContactAttemptModelWrapper(log_entry)
+        # FIXME: Throws an exception because does not exist for the current object
+        if hasattr(self.object, 'inpersonlog'):
+            in_person_log = getattr(self.object, 'inpersonlog')
+            
+            log_entry = PreFlourishInPersonContactAttempt(
+                in_person_log=in_person_log,
+                prev_study=self.prev_protocol,
+                study_maternal_identifier=self.study_maternal_identifier)
+            return InPersonContactAttemptModelWrapper(log_entry)
 
     @property
     def locator_phone_numbers(self):

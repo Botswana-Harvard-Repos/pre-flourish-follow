@@ -45,7 +45,7 @@ class ListboardView(NavbarViewMixin, EdcBaseViewMixin,
     search_form_url = 'pre_flourish_follow_listboard_url'
 
     def get_success_url(self):
-        return reverse('pre_flourish_follow:flourish_follow_listboard_url')
+        return reverse('pre_flourish_follow:pre_flourish_follow_listboard_url')
 
     def create_user_worklist(self, selected_participants=None):
         """Sets a work list for a user.
