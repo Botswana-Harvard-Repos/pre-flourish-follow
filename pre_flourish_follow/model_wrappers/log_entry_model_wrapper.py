@@ -12,3 +12,7 @@ class LogEntryModelWrapper(ModelWrapper):
     @property
     def log(self):
         return self.object.log
+    
+    @property
+    def prev_study(self):
+        return "BCCP"
