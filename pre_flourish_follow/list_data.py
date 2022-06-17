@@ -3,7 +3,7 @@ from edc_constants.constants import OTHER, DWTA
 from edc_list_data import PreloadData
 
 list_data = {
-    'pre_flourish_follow.reasonsunwilling': [
+    'pre_flourish_follow.preflourishreasonsunwilling': [
         ('not_interested', 'Caregiver not interested in participating'),
         ('busy', 'Busy during the suggested times'),
         ('away', 'Out of town during the suggested times'),

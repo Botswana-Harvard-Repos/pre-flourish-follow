@@ -16,7 +16,7 @@ from edc_base.view_mixins import EdcBaseViewMixin
 from edc_navbar import NavbarViewMixin
 
 from django_pandas.io import read_frame
-from flourish_child.models import ChildDataset
+# from flourish_child.models import ChildDataset
 
 from ..forms import (
     AssignParticipantForm, ResetAssignmentForm, ReAssignParticipantForm,
@@ -66,9 +66,8 @@ class HomeView(
         over_age_limit = ChildDataset.objects.filter(
             age_today__gte=Decimal('17.9')).values_list(
                 'study_maternal_identifier', flat=True)
-        return list(set(over_age_limit))
-
-
+        return list()
+    
     def available_participants(self, prev_study=None):
 
         if prev_study:

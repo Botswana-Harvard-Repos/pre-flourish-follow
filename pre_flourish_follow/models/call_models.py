@@ -18,7 +18,7 @@ from ..choices import (
     APPT_TYPE,
     CONTACT_FAIL_REASON, MAY_CALL, PHONE_USED, PHONE_SUCCESS,
     HOME_VISIT, YES_NO_ST_NA)
-from .list_models import PreReasonsUnwilling as ReasonsUnwilling
+from .list_models import PreFlourishReasonsUnwilling as ReasonsUnwilling
 
 
 class PreFlourishCall(CallModelMixin, BaseUuidModel):
@@ -37,7 +37,7 @@ class PreFlourishLog(LogModelMixin, BaseUuidModel):
 
 
 class PreFlourishLogEntry(BaseUuidModel):
-    log = models.ForeignKey(PreFlourishLog, on_delete=models.PROTECT,  related_name='pre_flourish_log')
+    log = models.ForeignKey(PreFlourishLog, on_delete=models.PROTECT,)
 
     subject_identifier = models.CharField(
         max_length=50,
@@ -214,15 +214,15 @@ class PreFlourishLogEntry(BaseUuidModel):
     )
 
     def save(self, *args, **kwargs):
-        if not self.screening_identifier:
-            try:
-                maternal_dataset = MaternalDataset.objects.get(
-                    study_maternal_identifier=self.study_maternal_identifier)
-            except MaternalDataset.DoesNotExist:
-                raise ValidationError(
-                    f'Dataset object missing. for {self.study_maternal_identifier}')
-            else:
-                self.screening_identifier = maternal_dataset.screening_identifier
+        # if not self.screening_identifier:
+        #     try:
+        #         maternal_dataset = MaternalDataset.objects.get(
+        #             study_maternal_identifier=self.study_maternal_identifier)
+        #     except MaternalDataset.DoesNotExist:
+        #         raise ValidationError(
+        #             f'Dataset object missing. for {self.study_maternal_identifier}')
+        #     else:
+        #         self.screening_identifier = maternal_dataset.screening_identifier
         super().save(*args, **kwargs)
 
     @property
