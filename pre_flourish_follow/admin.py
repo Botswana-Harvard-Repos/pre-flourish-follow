@@ -1,6 +1,7 @@
 from django.apps import apps as django_apps
 from django.contrib import admin
 from django.conf import settings
+from django.shortcuts import redirect
 
 from django_revision.modeladmin_mixin import ModelAdminRevisionMixin
 from django.urls.base import reverse
@@ -237,8 +238,11 @@ class LogEntryAdmin(ModelAdminMixin, admin.ModelAdmin):
                 and obj.home_visit == NOT_APPLICABLE):
             if request.GET.dict().get('next'):
                 url_name = settings.DASHBOARD_URL_NAMES.get(
-                    'maternal_dataset_listboard_url')
-            options = {'study_maternal_identifier': request.GET.dict().get('study_maternal_identifier')}
+                    'pre_flourish_caregiver_locator_listboard_url')
+                
+            options = {'study_maternal_identifier': request.GET.get('study_maternal_identifier', None)}
+            
+            breakpoint()
             try:
                 redirect_url = reverse(url_name, kwargs=options)
             except NoReverseMatch as e:

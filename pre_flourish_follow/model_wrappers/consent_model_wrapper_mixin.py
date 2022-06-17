@@ -102,20 +102,3 @@ class ConsentModelWrapperMixin:
             else:
                 initials = f'{first_name[:1]}{last_name[:1]}'
         return initials
-
-    # @property
-    # def children_eligibility(self):
-    #     child_eligibility = True
-
-    #     if self.child_consents:
-    #         eligble_children = self.child_consents.filter(is_eligible=True)
-    #         if not eligble_children:
-    #             child_eligibility = False
-
-    #     return child_eligibility
-
-    # @property
-    # def children_ineligible(self):
-    #     if self.child_consents:
-    #         return self.child_consents.filter(is_eligible=False)
-    #     return []
