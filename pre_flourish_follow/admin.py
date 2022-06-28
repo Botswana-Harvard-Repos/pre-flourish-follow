@@ -265,8 +265,8 @@ class LogEntryAdmin(ModelAdminMixin, admin.ModelAdmin):
             'caretaker_tel']
 
         try:
-            locator_obj = caregiver_locator_cls.objects.get(
-                study_maternal_identifier=study_identifier)
+            locator_obj = caregiver_locator_cls.objects.filter(
+                study_maternal_identifier=study_identifier).latest('report_datetime')
         except caregiver_locator_cls.DoesNotExist:
             pass
         else:
@@ -294,8 +294,8 @@ class LogEntryAdmin(ModelAdminMixin, admin.ModelAdmin):
             'tel_resp_person_fail': 'caretaker_tel'}
 
         try:
-            locator_obj = caregiver_locator_cls.objects.get(
-                study_maternal_identifier=study_identifier)
+            locator_obj = caregiver_locator_cls.objects.filter(
+                study_maternal_identifier=study_identifier).latest('report_datetime')
         except caregiver_locator_cls.DoesNotExist:
             pass
         else:
@@ -386,8 +386,8 @@ class InPersonContactAttemptAdmin(ModelAdminMixin, admin.ModelAdmin):
             'indirect_contact_physical_address']
 
         try:
-            locator_obj = caregiver_locator_cls.objects.get(
-                study_maternal_identifier=study_identifier)
+            locator_obj = caregiver_locator_cls.objects.filter(
+                study_maternal_identifier=study_identifier).latest('report_datetime')
         except caregiver_locator_cls.DoesNotExist:
             pass
         else:
@@ -407,8 +407,8 @@ class InPersonContactAttemptAdmin(ModelAdminMixin, admin.ModelAdmin):
             'contact_person_unsuc': 'indirect_contact_physical_address'}
 
         try:
-            locator_obj = caregiver_locator_cls.objects.get(
-                study_maternal_identifier=study_identifier)
+            locator_obj = caregiver_locator_cls.objects.filter(
+                study_maternal_identifier=study_identifier).latest('report_datetime')
         except caregiver_locator_cls.DoesNotExist:
             pass
         else:

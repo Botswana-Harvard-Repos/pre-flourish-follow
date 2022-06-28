@@ -28,8 +28,8 @@ class WorkListModelWrapper(ModelWrapper):
                     subject_identifier=self.object.subject_identifier)
             except SubjectLocator.DoesNotExist:
                 try:
-                    locator = SubjectLocator.objects.get(
-                        study_maternal_identifier=self.object.study_maternal_identifier)
+                    locator = SubjectLocator.objects.filter(
+                        study_maternal_identifier=self.object.study_maternal_identifier).latest('report_datetime')
                 except SubjectLocator.DoesNotExist:
                     return None
                 else:
