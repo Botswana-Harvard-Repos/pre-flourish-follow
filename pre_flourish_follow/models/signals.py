@@ -34,8 +34,8 @@ def cal_log_entry_on_post_save(sender, instance, using, raw, **kwargs):
             'flourish_caregiver.caregiverlocator')
         if instance.appt == YES:
             try:
-                locator = SubjectLocator.objects.get(
-                    study_maternal_identifier=instance.study_maternal_identifier)
+                locator = SubjectLocator.objects.filter(
+                    study_maternal_identifier=instance.study_maternal_identifier).latest('report_datetime')
             except SubjectLocator.DoesNotExist:
                 return None
             else:
