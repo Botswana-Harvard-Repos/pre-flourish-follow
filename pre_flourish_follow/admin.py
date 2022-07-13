@@ -242,7 +242,7 @@ class LogEntryAdmin(ModelAdminMixin, admin.ModelAdmin):
                 
             options = {'study_maternal_identifier': request.GET.get('study_maternal_identifier', None)}
             
-            breakpoint()
+
             try:
                 redirect_url = reverse(url_name, kwargs=options)
             except NoReverseMatch as e:
