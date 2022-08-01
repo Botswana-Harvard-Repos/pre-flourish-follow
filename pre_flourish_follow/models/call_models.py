@@ -123,6 +123,12 @@ class PreFlourishLogEntry(BaseUuidModel):
         max_length=100,
         choices=CONTACT_FAIL_REASON,
         default=NOT_APPLICABLE)
+    
+    has_biological_child = models.CharField(
+        verbose_name='Does the participant have a biological child'
+        ' who is between the ages of 10 and less than 18?',
+        max_length=3,
+        choices=YES_NO,)
 
     appt = models.CharField(
         verbose_name='Is the participant willing to schedule an appointment',
