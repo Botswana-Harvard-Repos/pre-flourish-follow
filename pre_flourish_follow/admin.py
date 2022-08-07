@@ -8,7 +8,7 @@ from django.urls.base import reverse
 from django.urls.exceptions import NoReverseMatch
 
 from edc_model_admin.model_admin_next_url_redirect_mixin import ModelAdminNextUrlRedirectError
-from edc_constants.constants import NOT_APPLICABLE
+from edc_constants.constants import NOT_APPLICABLE, YES
 from edc_base.sites.admin import ModelAdminSiteMixin
 from edc_model_admin import (
     ModelAdminNextUrlRedirectMixin, ModelAdminFormInstructionsMixin,
@@ -174,39 +174,41 @@ class LogEntryAdmin(ModelAdminMixin, admin.ModelAdmin):
                        'tel_resp_person_fail')
         }),
         ('Schedule Appointment With Participant', {
-           'fields': ('appt',
-                      'appt_type',
-                      'other_appt_type',
-                      'appt_reason_unwilling',
-                      'appt_reason_unwilling_other',
-                      'appt_date',
-                      'appt_grading',
-                      'appt_location',
-                      'appt_location_other',
-                      'may_call',
-                      'home_visit',
-                      'home_visit_other',
-                      'final_contact',
-                      )
+           'fields': (
+                    'has_biological_child',
+                    'appt',
+                    'appt_type',
+                    'other_appt_type',
+                    'appt_reason_unwilling',
+                    'appt_reason_unwilling_other',
+                    'appt_date',
+                    'appt_grading',
+                    'appt_location',
+                    'appt_location_other',
+                    'may_call',
+                    'home_visit',
+                    'home_visit_other',
+                    'final_contact',)
         }), audit_fieldset_tuple)
 
-    radio_fields = {'appt': admin.VERTICAL,
-                    'appt_type': admin.VERTICAL,
-                    'appt_grading': admin.VERTICAL,
-                    'appt_location': admin.VERTICAL,
-                    'may_call': admin.VERTICAL,
-                    'cell_contact_fail': admin.VERTICAL,
-                    'alt_cell_contact_fail': admin.VERTICAL,
-                    'tel_contact_fail': admin.VERTICAL,
-                    'alt_tel_contact_fail': admin.VERTICAL,
-                    'work_contact_fail': admin.VERTICAL,
-                    'cell_alt_contact_fail': admin.VERTICAL,
-                    'tel_alt_contact_fail': admin.VERTICAL,
-                    'cell_resp_person_fail': admin.VERTICAL,
-                    'tel_resp_person_fail': admin.VERTICAL,
-                    'home_visit': admin.VERTICAL,
-                    'final_contact': admin.VERTICAL,
-                    }
+    radio_fields = {
+        'has_biological_child': admin.VERTICAL,
+        'appt': admin.VERTICAL,
+        'appt_type': admin.VERTICAL,
+        'appt_grading': admin.VERTICAL,
+        'appt_location': admin.VERTICAL,
+        'may_call': admin.VERTICAL,
+        'cell_contact_fail': admin.VERTICAL,
+        'alt_cell_contact_fail': admin.VERTICAL,
+        'tel_contact_fail': admin.VERTICAL,
+        'alt_tel_contact_fail': admin.VERTICAL,
+        'work_contact_fail': admin.VERTICAL,
+        'cell_alt_contact_fail': admin.VERTICAL,
+        'tel_alt_contact_fail': admin.VERTICAL,
+        'cell_resp_person_fail': admin.VERTICAL,
+        'tel_resp_person_fail': admin.VERTICAL,
+        'home_visit': admin.VERTICAL,
+        'final_contact': admin.VERTICAL,}
 
     filter_horizontal = ('appt_reason_unwilling', )
 
@@ -234,8 +236,10 @@ class LogEntryAdmin(ModelAdminMixin, admin.ModelAdmin):
     def redirect_url(self, request, obj, post_url_continue=None):
         redirect_url = super().redirect_url(
             request, obj, post_url_continue=post_url_continue)
-        if ('none_of_the_above' not in obj.phone_num_success
-                and obj.home_visit == NOT_APPLICABLE):
+        if 'none_of_the_above' not in obj.phone_num_success \
+                and obj.home_visit == NOT_APPLICABLE \
+                and obj.has_biological_child == YES:
+                    
             if request.GET.dict().get('next'):
                 url_name = settings.DASHBOARD_URL_NAMES.get(
                     'pre_flourish_caregiver_locator_listboard_url')
