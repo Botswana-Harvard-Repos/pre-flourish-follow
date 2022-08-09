@@ -35,6 +35,21 @@ class LogEntryFormValidator(ContactFormValidator, FormValidator):
                           'caretaker_tel': 'tel_resp_person_fail'}
 
             self.validate_unsuccesful_na(fields_map, contact_used, contact_success)
+        
+        self.validate_appointment()
+            
+    def validate_appointment(self):
+        self.not_applicable_if(
+            ['none_of_the_above'],
+            field='phone_num_success',
+            field_applicable='has_biological_child')
+
+        self.applicable_if(
+                YES,
+                field='has_biological_child',
+                field_applicable='appt',)
+        
+
 
         self.required_if(YES,
                          field='appt',
@@ -62,10 +77,7 @@ class LogEntryFormValidator(ContactFormValidator, FormValidator):
 
         self.validate_other_specify(field='appt_location')
 
-        self.not_applicable_if(
-            ['none_of_the_above'],
-            field='phone_num_success',
-            field_applicable='appt')
+
 
         self.validate_appointment_is_no()
 
