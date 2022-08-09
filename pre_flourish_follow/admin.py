@@ -236,6 +236,9 @@ class LogEntryAdmin(ModelAdminMixin, admin.ModelAdmin):
     def redirect_url(self, request, obj, post_url_continue=None):
         redirect_url = super().redirect_url(
             request, obj, post_url_continue=post_url_continue)
+        
+        breakpoint()
+        
         if 'none_of_the_above' not in obj.phone_num_success \
                 and obj.home_visit == NOT_APPLICABLE \
                 and obj.has_biological_child == YES:
