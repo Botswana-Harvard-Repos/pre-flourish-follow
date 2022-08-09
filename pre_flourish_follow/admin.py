@@ -237,8 +237,6 @@ class LogEntryAdmin(ModelAdminMixin, admin.ModelAdmin):
         redirect_url = super().redirect_url(
             request, obj, post_url_continue=post_url_continue)
         
-        breakpoint()
-        
         if 'none_of_the_above' not in obj.phone_num_success \
                 and obj.home_visit == NOT_APPLICABLE \
                 and obj.has_biological_child == YES:
@@ -255,6 +253,7 @@ class LogEntryAdmin(ModelAdminMixin, admin.ModelAdmin):
             except NoReverseMatch as e:
                 raise ModelAdminNextUrlRedirectError(
                     f'{e}. Got url_name={url_name}, kwargs={options}.')
+            
         return redirect_url
 
     def phone_choices(self, study_identifier):
