@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
-from edc_constants.choices import YES_NO
+from edc_constants.choices import YES_NO, YES_NO_NA
 from multiselectfield import MultiSelectField
 
 from edc_base.model_fields import OtherCharField
@@ -128,13 +128,13 @@ class PreFlourishLogEntry(BaseUuidModel):
         verbose_name='Does the participant have a biological child'
         ' who is between the ages of 10 and less than 18?',
         max_length=3,
-        choices=YES_NO,)
+        choices=YES_NO_NA,)
 
     appt = models.CharField(
         verbose_name='Is the participant willing to schedule an appointment',
         max_length=10,
         choices=YES_NO_ST_NA,
-        default=NOT_APPLICABLE)
+        default=NOT_APPLICABLE,)
 
     appt_type = models.CharField(
         verbose_name='Type of appointment',
