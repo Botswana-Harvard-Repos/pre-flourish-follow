@@ -16,7 +16,7 @@ from edc_base.view_mixins import EdcBaseViewMixin
 from edc_navbar import NavbarViewMixin
 
 from django_pandas.io import read_frame
-# from flourish_child.models import ChildDataset
+from flourish_child.models import ChildDataset
 
 from ..forms import (
     AssignParticipantForm, ResetAssignmentForm, ReAssignParticipantForm,
