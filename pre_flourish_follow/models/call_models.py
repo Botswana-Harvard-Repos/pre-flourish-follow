@@ -1,24 +1,18 @@
-from django.core.exceptions import ValidationError
 from django.db import models
-from edc_constants.choices import YES_NO, YES_NO_NA
-from multiselectfield import MultiSelectField
-
 from edc_base.model_fields import OtherCharField
 from edc_base.model_mixins import BaseUuidModel
 from edc_base.model_validators import date_is_future, datetime_not_future
 from edc_base.utils import get_utcnow
-from edc_constants.constants import YES, NO, NOT_APPLICABLE
-
 from edc_call_manager.model_mixins import (
     CallModelMixin, LogModelMixin)
-from flourish_caregiver.models.maternal_dataset import MaternalDataset
+from edc_constants.choices import YES_NO, YES_NO_NA
+from edc_constants.constants import NO, NOT_APPLICABLE, YES
+from multiselectfield import MultiSelectField
 
-from ..choices import (
-    APPT_GRADING, APPT_LOCATIONS,
-    APPT_TYPE,
-    CONTACT_FAIL_REASON, MAY_CALL, PHONE_USED, PHONE_SUCCESS,
-    HOME_VISIT, YES_NO_ST_NA)
+from .eligibility_mixin import EligibilityMixin
 from .list_models import PreFlourishReasonsUnwilling as ReasonsUnwilling
+from ..choices import (APPT_GRADING, APPT_LOCATIONS, APPT_TYPE, CONTACT_FAIL_REASON,
+                       HOME_VISIT, MAY_CALL, PHONE_SUCCESS, PHONE_USED, YES_NO_ST_NA)
 
 
 class PreFlourishCall(CallModelMixin, BaseUuidModel):
@@ -30,14 +24,15 @@ class PreFlourishCall(CallModelMixin, BaseUuidModel):
 
 
 class PreFlourishLog(LogModelMixin, BaseUuidModel):
-    call = models.ForeignKey(PreFlourishCall, on_delete=models.PROTECT, related_name='pre_flourish_call')
+    call = models.ForeignKey(PreFlourishCall, on_delete=models.PROTECT,
+                             related_name='pre_flourish_call')
 
     class Meta(LogModelMixin.Meta):
         app_label = 'pre_flourish_follow'
 
 
-class PreFlourishLogEntry(BaseUuidModel):
-    log = models.ForeignKey(PreFlourishLog, on_delete=models.PROTECT,)
+class PreFlourishLogEntry(EligibilityMixin, BaseUuidModel):
+    log = models.ForeignKey(PreFlourishLog, on_delete=models.PROTECT, )
 
     subject_identifier = models.CharField(
         max_length=50,
@@ -123,18 +118,18 @@ class PreFlourishLogEntry(BaseUuidModel):
         max_length=100,
         choices=CONTACT_FAIL_REASON,
         default=NOT_APPLICABLE)
-    
+
     has_biological_child = models.CharField(
         verbose_name='Does the participant have a biological child'
-        ' who is between the ages of 10 and less than 18?',
+                     ' who is between the ages of 10 and less than 18?',
         max_length=3,
-        choices=YES_NO_NA,)
+        choices=YES_NO_NA, )
 
     appt = models.CharField(
         verbose_name='Is the participant willing to schedule an appointment',
         max_length=10,
         choices=YES_NO_ST_NA,
-        default=NOT_APPLICABLE,)
+        default=NOT_APPLICABLE, )
 
     appt_type = models.CharField(
         verbose_name='Type of appointment',
@@ -235,7 +230,8 @@ class PreFlourishLogEntry(BaseUuidModel):
     def subject(self):
         """Override to return the FK attribute to the subject.
 
-        expects any model instance with fields ['first_name', 'last_name', 'gender', 'dob'].
+        expects any model instance with fields ['first_name', 'last_name', 'gender',
+        'dob'].
 
         For example: self.registered_subject.
 

@@ -22,7 +22,8 @@ class LogEntryFormValidator(ContactFormValidator, FormValidator):
 
         if contact_success and contact_used:
             self.validate_success_selection(
-                'phone_num_success', contact_used, contact_success, study_maternal_identifier)
+                'phone_num_success', contact_used, contact_success,
+                study_maternal_identifier)
 
             fields_map = {'subject_cell': 'cell_contact_fail',
                           'subject_cell_alt': 'alt_cell_contact_fail',
@@ -35,21 +36,23 @@ class LogEntryFormValidator(ContactFormValidator, FormValidator):
                           'caretaker_tel': 'tel_resp_person_fail'}
 
             self.validate_unsuccesful_na(fields_map, contact_used, contact_success)
-        
+
         self.validate_appointment()
-            
+        self.validate_successful_call()
+
     def validate_appointment(self):
-        self.not_applicable_if(
-            ['none_of_the_above'],
-            field='phone_num_success',
-            field_applicable='has_biological_child')
+        not_app_fields = ['has_biological_child', 'appt']
+
+        for field in not_app_fields:
+            self.not_applicable_if(
+                ['none_of_the_above'],
+                field='phone_num_success',
+                field_applicable=field)
 
         self.applicable_if(
-                YES,
-                field='has_biological_child',
-                field_applicable='appt',)
-        
-
+            YES,
+            field='has_biological_child',
+            field_applicable='appt', )
 
         self.required_if(YES,
                          field='appt',
@@ -77,8 +80,6 @@ class LogEntryFormValidator(ContactFormValidator, FormValidator):
 
         self.validate_other_specify(field='appt_location')
 
-
-
         self.validate_appointment_is_no()
 
         self.validate_other_specify(field='home_visit')
@@ -93,5 +94,18 @@ class LogEntryFormValidator(ContactFormValidator, FormValidator):
     def validate_appointment_is_no(self):
         appt = self.cleaned_data.get('appt')
         may_call = self.cleaned_data.get('may_call')
-        if appt == NO and not (may_call == 'no_flourish_study_calls' or may_call == 'no_any_bhp_study_calls'):
-            raise ValidationError({'may_call': 'Q16 - Participant NOT willing to schedule an appointment'})
+        if appt == NO and not (
+                may_call == 'no_flourish_study_calls' or may_call ==
+                'no_any_bhp_study_calls'):
+            raise ValidationError(
+                {'may_call': 'Q16 - Participant NOT willing to schedule an appointment'})
+
+    def validate_successful_call(self):
+        fields = ['willing_consent', 'has_child', 'caregiver_age', 'caregiver_omang',
+                  'willing_assent', 'study_interest', ]
+
+        for field in fields:
+            self.not_required_if(
+                ['none_of_the_above'],
+                field='phone_num_success',
+                field_required=field)
