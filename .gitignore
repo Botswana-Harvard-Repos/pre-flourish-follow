@@ -127,3 +127,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+pre_flourish_follow/migrations/*
