@@ -13,7 +13,7 @@ class EligibilityMixin(models.Model):
         choices=YES_NO)
 
     has_child = models.CharField(
-        verbose_name="Do you have a child aged between 10 and 17.5 years?",
+        verbose_name="Do you have a child aged between 7 and 17.5 years?",
         max_length=3,
         blank=True,
         null=True,
