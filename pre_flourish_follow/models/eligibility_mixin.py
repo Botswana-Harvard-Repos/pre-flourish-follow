@@ -1,16 +1,18 @@
 from django.db import models
 from edc_constants.choices import YES_NO
 
+from pre_flourish.choices import YES_NO_THINKING
+
 
 class EligibilityMixin(models.Model):
     """Mixin for eligibility questions."""
     willing_consent = models.CharField(
         verbose_name="Are you willing to consent for your child HIV test?",
-        max_length=3,
+        max_length=20,
         blank=True,
         null=True,
         help_text='If no, participant is not eligible.',
-        choices=YES_NO)
+        choices=YES_NO_THINKING)
 
     has_child = models.CharField(
         verbose_name="Do you have a child aged between 7 and 17.5 years?",
