@@ -64,7 +64,7 @@ class ListboardView(NavbarViewMixin, EdcBaseViewMixin,
         if form.is_valid():
             participants = form.cleaned_data['participants']
 
-            self.get_participants(participants,prev_study='Tshilo Dikotla')
+            self.get_participants(participants,prev_study='BCPP')
 
 
         return super().form_valid(form)
