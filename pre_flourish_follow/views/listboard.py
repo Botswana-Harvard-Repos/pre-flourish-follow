@@ -66,7 +66,6 @@ class ListboardView(NavbarViewMixin, EdcBaseViewMixin,
 
             self.get_participants(participants, ratio=0.5, prev_study='Tshilo Dikotla')
 
-            self.get_participants(participants, ratio=0.5, prev_study='Mma Bana')
 
         return super().form_valid(form)
 
@@ -80,11 +79,7 @@ class ListboardView(NavbarViewMixin, EdcBaseViewMixin,
         if (len(available_participants) < participants):
             selected_participants = self.available_participants(prev_study=prev_study)
         else:
-            if ratio:
-                selected_participants = random.sample(
-                    available_participants, round(participants * ratio))
-            else:
-                selected_participants = random.sample(
+            selected_participants = random.sample(
                     available_participants, participants)
 
         self.create_user_worklist(selected_participants=selected_participants)
