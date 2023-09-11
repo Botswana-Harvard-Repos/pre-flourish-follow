@@ -173,12 +173,7 @@ class LogEntryAdmin(ModelAdminMixin, admin.ModelAdmin):
         }),
         ('Eligibility Criteria', {
             'fields': (
-                'willing_consent',
                 'has_child',
-                'caregiver_age',
-                'caregiver_omang',
-                'willing_assent',
-                'study_interest',
                 'appt',
                 'appt_type',
                 'other_appt_type',
@@ -253,13 +248,7 @@ class LogEntryAdmin(ModelAdminMixin, admin.ModelAdmin):
             request, obj, post_url_continue=post_url_continue)
 
         if 'none_of_the_above' not in obj.phone_num_success \
-                and obj.home_visit == NOT_APPLICABLE \
-                and obj.willing_consent == YES \
-                and obj.has_child == YES \
-                and obj.caregiver_age == YES \
-                and obj.caregiver_omang == YES \
-                and obj.willing_assent == YES \
-                and obj.study_interest == YES:
+                and obj.has_child == YES and obj.appt == YES:
 
             if request.GET.dict().get('next'):
                 url_name = settings.DASHBOARD_URL_NAMES.get(

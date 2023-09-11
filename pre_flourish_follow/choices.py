@@ -32,7 +32,6 @@ APPT_REASONS_UNWILLING = (
 APPT_TYPE = (
     ('screening', 'Screening'),
     ('re_call', 'Re-call'),
-    ('consenting', 'Consenting'),
     (OTHER, 'Other')
 
 )
