@@ -41,7 +41,7 @@ class LogEntryFormValidator(ContactFormValidator, FormValidator):
         self.validate_successful_call()
 
     def validate_appointment(self):
-        not_app_fields = ['has_biological_child', 'appt']
+        not_app_fields = ['has_biological_child', ]
 
         for field in not_app_fields:
             self.not_applicable_if(
@@ -51,7 +51,7 @@ class LogEntryFormValidator(ContactFormValidator, FormValidator):
 
         self.applicable_if(
             YES,
-            field='has_biological_child',
+            field='has_child',
             field_applicable='appt', )
 
         self.required_if(YES,
