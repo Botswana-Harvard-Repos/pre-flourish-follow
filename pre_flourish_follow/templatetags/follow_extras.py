@@ -1,3 +1,6 @@
+import json
+from datetime import date, datetime
+
 from django import template
 from django.conf import settings
 
@@ -16,3 +19,13 @@ def dashboard_button(model_wrapper):
     return dict(
         subject_dashboard_url=subject_dashboard_url,
         subject_identifier=model_wrapper.subject_identifier)
+
+
+@register.filter(name='jsonify')
+def jsonify(obj):
+    def default_serializer(o):
+        if isinstance(o, (datetime, date)):
+            return o.isoformat()
+        raise TypeError(f'Object of type {o.__class__.__name__} is not JSON serializable')
+
+    return json.dumps(obj, default=default_serializer)
