@@ -1,4 +1,3 @@
-import datetime
 import os
 
 from django.conf import settings
@@ -9,9 +8,8 @@ from ..models import PreFlourishFollowExportFile as FollowExportFile
 
 class DownloadReportMixin:
 
-    def download_data(
-            self, description=None, start_date=None,
-            end_date=None, report_type=None, df=None):
+    def download_data(self, description=None, start_date=None,
+                      end_date=None, report_type=None, df=None):
         """Export all data.
         """
 
