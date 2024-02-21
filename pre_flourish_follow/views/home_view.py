@@ -1,8 +1,7 @@
 import datetime
-import random
 from decimal import Decimal
+import random
 
-import pandas as pd
 from django.apps import apps as django_apps
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -13,22 +12,25 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
-from django_pandas.io import read_frame
 from edc_base.view_mixins import EdcBaseViewMixin
 from edc_navbar import NavbarViewMixin
 
+from django_pandas.io import read_frame
 from flourish_child.models import ChildDataset
-from pre_flourish.models import PreFlourishLogEntry
-from .download_report_mixin import DownloadReportMixin
-from ..forms import (AssignParticipantForm, ReAssignParticipantForm, ResetAssignmentForm,
-                     SingleReAssignParticipantForm)
+
+from ..forms import (
+    AssignParticipantForm, ResetAssignmentForm, ReAssignParticipantForm,
+    SingleReAssignParticipantForm)
 from ..models import PreFlourishFollowExportFile as FollowExportFile
 from ..models import PreFlourishWorkList as WorkList
 
+from .download_report_mixin import DownloadReportMixin
+
 
 class HomeView(
-    EdcBaseViewMixin, NavbarViewMixin,
-    DownloadReportMixin, TemplateView, FormView):
+        EdcBaseViewMixin, NavbarViewMixin,
+        DownloadReportMixin, TemplateView, FormView):
+
     form_class = AssignParticipantForm
     template_name = 'pre_flourish_follow/home.html'
     navbar_name = 'pre_flourish_follow'
@@ -54,7 +56,7 @@ class HomeView(
         """Return participants assignments.
         """
         assignments = WorkList.objects.filter(assigned__isnull=False).values_list(
-            'assigned', 'study_maternal_identifier', 'is_called', 'visited')
+                'assigned', 'study_maternal_identifier', 'is_called', 'visited')
         return assignments
 
     @property
@@ -63,7 +65,7 @@ class HomeView(
         """
         over_age_limit = ChildDataset.objects.filter(
             age_today__gte=Decimal('17.9')).values_list(
-            'study_maternal_identifier', flat=True)
+                'study_maternal_identifier', flat=True)
         return list()
 
     def available_participants(self, prev_study=None):
@@ -72,14 +74,14 @@ class HomeView(
             identifiers = WorkList.objects.filter(
                 prev_study=prev_study, consented=False,
                 is_called=False, assigned=None, date_assigned=None).values_list(
-                'study_maternal_identifier', flat=True)
+                    'study_maternal_identifier', flat=True)
         else:
             identifiers = WorkList.objects.filter(
                 is_called=False,
                 assigned=None,
                 date_assigned=None,
-                consented=False, ).values_list(
-                'study_maternal_identifier', flat=True)
+                consented=False,).values_list(
+                    'study_maternal_identifier', flat=True)
 
         final_list = list(set(identifiers) - set(self.over_age_limit))
 
@@ -92,19 +94,19 @@ class HomeView(
             WorkList.objects.filter(
                 date_assigned__isnull=False,
                 assigned__isnull=False).update(
-                assigned=None, date_assigned=None)
+                    assigned=None, date_assigned=None)
         else:
             WorkList.objects.filter(
                 date_assigned__isnull=False,
                 assigned=username).update(
-                assigned=None, date_assigned=None)
+                    assigned=None, date_assigned=None)
 
     def re_assign_participant_assignments(
             self, username_from=None, username_to=None):
         WorkList.objects.filter(
-            assigned=username_from).update(
-            assigned=username_to,
-            date_assigned=timezone.now().date())
+                assigned=username_from).update(
+                    assigned=username_to,
+                    date_assigned=timezone.now().date())
 
     @property
     def assign_users(self):
@@ -148,8 +150,7 @@ class HomeView(
             self.get_participants(participants, username, ratio=0.5,
                                   prev_study='Tshilo Dikotla')
 
-            self.get_participants(participants, username, ratio=0.5,
-                                  prev_study='Mma Bana')
+            self.get_participants(participants, username, ratio=0.5, prev_study='Mma Bana')
 
         return super().form_valid(form)
 
@@ -172,35 +173,17 @@ class HomeView(
         return len(selected_participants)
 
     def export(self):
-        """Export data with additional fields from PreFlourishLogEntry."""
-
+        """Export data.
+        """
+        qs = WorkList.objects.filter(assigned__isnull=False)
+        df = read_frame(qs, fieldnames=[
+            'assigned', 'study_maternal_identifier', 'is_called', 'visited'])
         self.download_data(
-            description='Participants Assignments with PreFlourishLogEntry Data',
+            description='Participants Assignments',
             start_date=datetime.datetime.now().date(),
             end_date=datetime.datetime.now().date(),
-            report_type='participants_assignment_detailed',
-            df=self.participants_assignments
-        )
-
-    @property
-    def participants_assignments(self):
-        worklist_qs = WorkList.objects.filter(assigned__isnull=False)
-        worklist_df = read_frame(worklist_qs, fieldnames=[
-            'assigned', 'study_maternal_identifier', 'is_called', 'visited'
-        ])
-        preflourish_qs = PreFlourishLogEntry.objects.all()
-        preflourish_df = read_frame(preflourish_qs, fieldnames=[
-            'study_maternal_identifier', 'subject_identifier', 'screening_identifier',
-            'call_datetime', 'appt_type'
-        ])
-        merged_df = pd.merge(
-            worklist_df,
-            preflourish_df,
-            on='study_maternal_identifier',
-            how='left',
-            suffixes=('', '_preflourish')
-        )
-        return merged_df
+            report_type='participants_assignment',
+            df=df)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -249,10 +232,9 @@ class HomeView(
                     study_maternal_identifier=study_maternal_identifier).update(
                     assigned=reassign_name,
                     date_assigned=timezone.now().date())
-        participants_assignments = self.participants_assignments.to_dict(orient='records')
 
         context.update(
-            participants_assignments=participants_assignments,
+            participants_assignments=self.participants_assignments,
             reset_assignment_form=reset_assignment_form,
             re_assign_participant_form=re_assign_participant_form,
             assign_users=self.assign_users,
