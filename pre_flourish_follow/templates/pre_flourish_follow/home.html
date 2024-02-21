@@ -105,11 +105,7 @@
 				<thead>
 					<tr>
 						<th>Username</th>
-						<th>Study Maternal Identifier</th>
-						<th>Subject Identifier</th>
-						<th>Screening Identifier</th>
-						<th>Call Datetime</th>
-						<th>Appointment Type</th>
+						<th>Participants</th>
 						<th>Called status</th>
 						<th>Visited status</th>
 						<th>Re-Assign</th>
@@ -118,11 +114,7 @@
 				<tfoot>
 					<tr>
 						<th>Username</th>
-						<th>Study Maternal Identifier</th>
-						<th>Subject Identifier</th>
-						<th>Screening Identifier</th>
-						<th>Call Datetime</th>
-						<th>Appointment Type</th>
+						<th>Participants</th>
 						<th>Called status</th>
 						<th>Visited status</th>
 						<th>Re-Assign</th>
@@ -131,14 +123,10 @@
 				<tbody>
 					{% for assignments in participants_assignments %}
 					<tr>
-				 		<td>{{ assignments.assigned }}</td>
-				 		<td>{{ assignments.study_maternal_identifier }}</td>
-				 		<td>{{ assignments.subject_identifier }}</td>
-				 		<td>{{ assignments.screening_identifier }}</td>
-				 		<td>{{ assignments.call_datetime }}</td>
-				 		<td>{{ assignments.appt_type }}</td>
-				 		<td>{{ assignments.is_called }}</td>
-				 		<td>{{ assignments.visited }}</td>
+				 		<td>{{ assignments.0 }}</td>
+				 		<td>{{ assignments.1 }}</td>
+				 		<td>{{ assignments.2 }}</td>
+				 		<td>{{ assignments.3 }}</td>
 				 		<td>
 				 			{% if request.user|has_group:"assign manager" %}
 				 			<form action="{% url 'pre_flourish_follow:home_url' %}" method="post">
