@@ -1,33 +1,27 @@
 from django.apps import apps as django_apps
-from django.contrib import admin
 from django.conf import settings
-from django.shortcuts import redirect
-
-from django_revision.modeladmin_mixin import ModelAdminRevisionMixin
+from django.contrib import admin
 from django.urls.base import reverse
 from django.urls.exceptions import NoReverseMatch
-
-from edc_model_admin.model_admin_next_url_redirect_mixin import \
-    ModelAdminNextUrlRedirectError
-from edc_constants.constants import NOT_APPLICABLE, YES
+from django_revision.modeladmin_mixin import ModelAdminRevisionMixin
 from edc_base.sites.admin import ModelAdminSiteMixin
-from edc_model_admin import (
-    ModelAdminNextUrlRedirectMixin, ModelAdminFormInstructionsMixin,
-    ModelAdminFormAutoNumberMixin, ModelAdminAuditFieldsMixin,
-    ModelAdminReadOnlyMixin, ModelAdminInstitutionMixin,
-    ModelAdminRedirectOnDeleteMixin)
+from edc_constants.constants import YES
 from edc_model_admin import audit_fieldset_tuple
+from edc_model_admin import ModelAdminAuditFieldsMixin, ModelAdminFormAutoNumberMixin, \
+    ModelAdminFormInstructionsMixin, ModelAdminInstitutionMixin, \
+    ModelAdminNextUrlRedirectMixin, ModelAdminReadOnlyMixin, \
+    ModelAdminRedirectOnDeleteMixin
 from edc_model_admin import ModelAdminBasicMixin
 from edc_model_admin.changelist_buttons import ModelAdminChangelistModelButtonMixin
+from edc_model_admin.model_admin_next_url_redirect_mixin import \
+    ModelAdminNextUrlRedirectError
 
-from .exportaction_mixin import ExportActionMixin
 from .admin_site import pre_flourish_follow_admin
-from .forms import (
-    BookingForm, WorkListForm, LogEntryForm, InPersonContactAttemptForm)
-from .models import (
-    PreFlourishBooking, PreFlourishCall, PreFlourishWorkList, PreFlourishLog,
-    PreFlourishLogEntry, PreFlourishInPersonContactAttempt,
-    PreFlourishInPersonLog)
+from .exportaction_mixin import ExportActionMixin
+from .forms import (BookingForm, InPersonContactAttemptForm, LogEntryForm, WorkListForm)
+from .models import (PreFlourishBooking, PreFlourishCall,
+                     PreFlourishInPersonContactAttempt, PreFlourishInPersonLog,
+                     PreFlourishLog, PreFlourishLogEntry, PreFlourishWorkList)
 
 
 class ModelAdminMixin(ModelAdminNextUrlRedirectMixin,
@@ -143,6 +137,19 @@ class LogEntryAdmin(ModelAdminMixin, admin.ModelAdmin):
     form = LogEntryForm
 
     search_fields = ['study_maternal_identifier']
+
+    exclude_fields = [
+        '_state', 'user_modified', 'revision', 'device_created', 'device_modified',
+        'log_id', 'hostname_created', 'hostname_modified', 'willing_consent',
+        'has_biological_child', 'not_interested', 'busy', 'away', 'unavailable',
+        'DWTA', 'busy_dwtp', 'doesnt_live_in_area', 'wont_disclose_status_to_child',
+        'child_not_lwh', 'doesnt_want_to_join', 'work_constraints', 'fears_joining',
+        'partner_refused', 'other_appts', 'fears_stigma', 'child_busy',
+        'child_not_interested', 'child_doesnt_live_in_area', 'child_fears_joining',
+        'child_other_appts', 'child_fears_stigma', 'child_dead', 'caregiver_unwilling',
+        'child_is_unwilling', 'child_age_not_in_range', 'OTHER', 'caregiver_age',
+        'caregiver_omang', 'willing_assent', 'study_interest'
+    ]
 
     fieldsets = (
         (None, {
@@ -265,35 +272,6 @@ class LogEntryAdmin(ModelAdminMixin, admin.ModelAdmin):
                     f'{e}. Got url_name={url_name}, kwargs={options}.')
 
         return redirect_url
-
-    def phone_choices(self, study_identifier):
-        caregiver_locator_cls = django_apps.get_model(
-            'flourish_caregiver.caregiverlocator')
-        field_attrs = [
-            'subject_cell',
-            'subject_cell_alt',
-            'subject_phone',
-            'subject_phone_alt',
-            'subject_work_phone',
-            'indirect_contact_cell',
-            'indirect_contact_phone',
-            'caretaker_cell',
-            'caretaker_tel']
-
-        try:
-            locator_obj = caregiver_locator_cls.objects.filter(
-                study_maternal_identifier=study_identifier).latest('report_datetime')
-        except caregiver_locator_cls.DoesNotExist:
-            pass
-        else:
-            phone_choices = ()
-            for field_attr in field_attrs:
-                value = getattr(locator_obj, field_attr)
-                if value:
-                    field_name = field_attr.replace('_', ' ')
-                    value = f'{value} {field_name.title()}'
-                    phone_choices += ((field_attr, value),)
-            return phone_choices
 
     def custom_field_label(self, study_identifier, field):
         caregiver_locator_cls = django_apps.get_model(
