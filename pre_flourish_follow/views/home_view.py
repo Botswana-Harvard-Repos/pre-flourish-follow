@@ -67,7 +67,7 @@ class HomeView(
             age_today__gte=Decimal('17.9')).values_list(
                 'study_maternal_identifier', flat=True)
         return list()
-    
+
     def available_participants(self, prev_study=None):
 
         if prev_study:
@@ -147,13 +147,13 @@ class HomeView(
 
             participants = form.cleaned_data['participants']
 
-            self.get_participants(participants, username, ratio=0.5, 
+            self.get_participants(participants, username, ratio=0.5,
                                   prev_study='Tshilo Dikotla')
 
             self.get_participants(participants, username, ratio=0.5, prev_study='Mma Bana')
 
         return super().form_valid(form)
-    
+
     def get_participants(self, participants, username, ratio=None, prev_study=None):
 
         available_participants = self.available_participants(prev_study=prev_study)

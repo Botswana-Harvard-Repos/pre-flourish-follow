@@ -1,0 +1,463 @@
+{% extends 'edc_base/base.html' %}
+
+{% load static %}
+{% load follow_extras %}
+
+{% block extra-scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block extra-css %}
+    <style>
+        .piecharts {
+            width: 200px;
+            height: 200px;
+        }
+    </style>
+
+{% endblock extra-css %}
+
+{% block main %}
+    <h1>Report</h1>
+
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <div class="panel-body">
+                <hr>
+                <div class="row mt-5">
+                    <div class="col-md-6">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th scope="col"></th>
+                                <th scope="col">Successful calls</th>
+                                <th scope="col">Failed calls</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Called Participants</td>
+                                <td>{{ contact_attempts.successful_calls }}</td>
+                                <td>{{ contact_attempts.failed_calls }}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="col-md-6">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th scope="col"></th>
+                                <th scope="col">Screening</th>
+                                <th scope="col">Re Call</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Appointments</td>
+                                <td>{{ contact_attempts.screening_appointments }}</td>
+                                <td>{{ contact_attempts.re_call_appointments }}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            Eligibility Report
+        </div>
+        <div class="panel-body">
+            <hr>
+            <!-- Child Age Eligibility -->
+            <div class="row mt-5">
+                <div class="col-md-6">
+                    <h3>Child Age Eligibility</h3>
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th scope="col">Category</th>
+                            <th scope="col">Count</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Eligible (Child aged 7 - 17.5 years)</td>
+                            <td>{{ eligibility_report.eligible_with_child }}</td>
+                        </tr>
+                        <tr>
+                            <td>Ineligible (No child or outside age range)</td>
+                            <td>{{ eligibility_report.ineligible_no_child }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Willingness to Schedule an Appointment -->
+                <div class="col-md-6">
+                    <h3>Willingness to Schedule an Appointment</h3>
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th scope="col">Willingness</th>
+                            <th scope="col">Count</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Willing</td>
+                            <td>{{ eligibility_report.willing_to_schedule }}</td>
+                        </tr>
+                        <tr>
+                            <td>Not Willing</td>
+                            <td>{{ eligibility_report.not_willing_to_schedule }}</td>
+                        </tr>
+                        <tr>
+                            <td>Still Thinking</td>
+                            <td>{{ eligibility_report.still_thinking_to_schedule }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Type of Appointment -->
+            <div class="row mt-5">
+                <div class="col-md-12">
+                    <h3>Type of Appointment</h3>
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th scope="col">Appointment Type</th>
+                            <th scope="col">Count</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Screening</td>
+                            <td>{{ eligibility_report.screening_appointments }}</td>
+                        </tr>
+                        <tr>
+                            <td>Re-call</td>
+                            <td>{{ eligibility_report.recall_appointments }}</td>
+                        </tr>
+                        <tr>
+                            <td>Other</td>
+                            <td>{{ eligibility_report.other_appointments }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Contact Attempts Report -->
+    <section id="contact-attempts-report">
+        <div class="panel panel-info">
+            <div class="panel-heading">Contact Attempts Report</div>
+            <div class="panel-body">
+                <div class="row">
+                    <aside class="col-sm-6">
+                        <h3>Total and Successful Contact Attempts:</h3>
+                        <canvas id="contactAttemptsChart"
+                                style="width: 100px; height: 100px;"></canvas>
+                    </aside>
+                    <aside class="col-sm-6">
+                        <h3>Unsuccessful Contact Attempts Breakdown:</h3>
+                        <canvas id="unsuccessfulContactChart" width="100"
+                                height="50"></canvas>
+                    </aside>
+                </div>
+                <script>
+                    // Total and Successful Contact Attempts Bar Chart
+                    var ctxContactAttempts = document.getElementById('contactAttemptsChart').getContext('2d');
+                    var contactAttemptsChart = new Chart(ctxContactAttempts, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Total Attempts', 'Successful Attempts'],
+                            datasets: [{
+                                label: 'Number of Attempts',
+                                data: [{{ contact_attempts_report.total_attempts }}, {{ contact_attempts_report.successful_attempts }}],
+                                backgroundColor: [
+                                    'rgba(255, 206, 86, 0.2)',
+                                    'rgba(75, 192, 192, 0.2)'
+                                ],
+                                borderColor: [
+                                    'rgba(255, 206, 86, 1)',
+                                    'rgba(75, 192, 192, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                }]
+                            }
+                        }
+                    });
+
+                    // Unsuccessful Contact Attempts Pie Chart
+                    var ctxUnsuccessful = document.getElementById('unsuccessfulContactChart').getContext('2d');
+                    var unsuccessfulContactChart = new Chart(ctxUnsuccessful, {
+                        type: 'pie',
+                        data: {
+                            labels: [
+                                {% for reason in contact_attempts_report.unsuccessful_reasons %}
+                                    "{{ reason.cell_contact_fail }}"{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            ],
+                            datasets: [{
+                                data: [
+                                    {% for reason in contact_attempts_report.unsuccessful_reasons %}
+                                        {{ reason.count }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                ],
+                                backgroundColor: [
+                                    {% for _ in contact_attempts_report.unsuccessful_reasons %}
+                                        `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.2)`{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                ],
+                                borderColor: [
+                                    {% for _ in contact_attempts_report.unsuccessful_reasons %}
+                                        `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            legend: {
+                                position: 'bottom',
+                            }
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+    </section>
+
+    <!-- Appointment Scheduling Report -->
+    <section id="appointment-scheduling-report">
+        <div class="panel panel-info">
+            <div class="panel-heading">Appointment Scheduling Report</div>
+            <div class="panel-body">
+                <div class="row">
+                    <aside class="col-sm-6">
+                        <h3>Willingness to Schedule Appointments:</h3>
+                        <canvas id="willingnessChart"
+                                style="width: 50px; height: 50px;"></canvas>
+                    </aside>
+                    <aside class="col-sm-6">
+                        <h3>Final Contact Report:</h3>
+                        <canvas id="finalContactChart"
+                                style="width: 50px; height: 50px;"></canvas>
+                    </aside>
+                    <aside class="col-sm-6">
+                        <h3>Reasons for Unwillingness to Schedule:</h3>
+                        <canvas id="reasonsUnwillingnessChart" width="400"
+                                height="200"></canvas>
+                    </aside>
+                    <aside class="col-sm-6">
+                        <h3>Upcoming Appointments Over Time:</h3>
+                        <canvas id="upcomingAppointmentsChart" width="400"
+                                height="200"></canvas>
+                    </aside>
+                </div>
+
+                <script>
+                    // Willingness to Schedule Chart
+                    var ctxWillingness = document.getElementById('willingnessChart').getContext('2d');
+                    var willingnessChart = new Chart(ctxWillingness, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Willing', 'Unwilling'],
+                            datasets: [{
+                                data: [{{ appointment_scheduling_report.willing_to_schedule }}, {{ appointment_scheduling_report.unwilling_to_schedule }}],
+                                backgroundColor: [
+                                    'rgba(54, 162, 235, 0.2)',
+                                    'rgba(255, 99, 132, 0.2)'
+                                ],
+                                borderColor: [
+                                    'rgba(54, 162, 235, 1)',
+                                    'rgba(255,99,132,1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            legend: {
+                                position: 'bottom',
+                            }
+                        }
+                    });
+
+                    // Reasons for Unwillingness Chart
+                    var ctxReasons = document.getElementById('reasonsUnwillingnessChart').getContext('2d');
+                    var reasonsUnwillingnessChart = new Chart(ctxReasons, {
+                        type: 'bar',
+                        data: {
+                            labels: [
+                                {% for reason in appointment_scheduling_report.reasons_unwilling %}
+                                    "{{ reason.name }}"{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            ],
+                            datasets: [{
+                                label: 'Count',
+                                data: [
+                                    {% for reason in appointment_scheduling_report.reasons_unwilling %}
+                                        {{ reason.count }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                ],
+                                backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                                borderColor: 'rgba(153, 102, 255, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                }]
+                            }
+                        }
+                    });
+
+                    // Upcoming Appointments Chart
+                    var ctxUpcoming = document.getElementById('upcomingAppointmentsChart').getContext('2d');
+                    var upcomingAppointmentsChart = new Chart(ctxUpcoming, {
+                        type: 'line',
+                        data: {
+                            labels: Object.keys(upcoming_appointments_data),
+                            datasets: [{
+                                label: 'Number of Appointments',
+                                data: Object.values(upcoming_appointments_data),
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1,
+                                fill: false
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                xAxes: [{
+                                    type: 'time',
+                                    time: {
+                                        unit: 'day'
+                                    }
+                                }],
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                }]
+                            }
+                        }
+                    });
+                </script>
+                <script>
+                    var ctx = document.getElementById('finalContactChart').getContext('2d');
+                    var finalContactChart = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: ['Final Contact Made', 'Available for Contact'],
+                            datasets: [{
+                                data: [{{ final_contact_report.final_contact_made }}, {{ final_contact_report.available_for_contact }}],
+                                backgroundColor: [
+                                    'rgba(255, 99, 132, 0.2)',
+                                    'rgba(54, 162, 235, 0.2)'
+                                ],
+                                borderColor: [
+                                    'rgba(255,99,132,1)',
+                                    'rgba(54, 162, 235, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            legend: {
+                                position: 'top',
+                            },
+                            animation: {
+                                animateScale: true,
+                                animateRotate: true
+                            }
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+    </section>
+
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            Assignments Report
+        </div>
+        <div class="panel-body">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th scope="col">User Assigned</th>
+                    <th scope="col">Total</th>
+                    <th scope="col">Called</th>
+                    <th scope="col">Visited</th>
+                    <th scope="col">Consented</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for assignment in assignments_report %}
+                    <tr>
+                        <td>{{ assignment.assigned }}</td>
+                        <td>{{ assignment.total }}</td>
+                        <td>{{ assignment.total_called }}</td>
+                        <td>{{ assignment.total_visited }}</td>
+                        <td>{{ assignment.total_consented }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            Activity Over Time Report
+        </div>
+        <div class="panel-body">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Total</th>
+                    <th scope="col">Called</th>
+                    <th scope="col">Visited</th>
+                    <th scope="col">Consented</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for activity in activity_over_time_report %}
+                    <tr>
+                        <td>{{ activity.date }}</td>
+                        <td>{{ activity.total }}</td>
+                        <td>{{ activity.total_called }}</td>
+                        <td>{{ activity.total_visited }}</td>
+                        <td>{{ activity.total_consented }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
