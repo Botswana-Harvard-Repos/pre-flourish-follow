@@ -66,7 +66,6 @@ class ListboardView(NavbarViewMixin, EdcBaseViewMixin,
 
             self.get_participants(participants,prev_study='BCPP')
 
-
         return super().form_valid(form)
 
     def get_participants(self, participants, ratio=None, prev_study=None):
