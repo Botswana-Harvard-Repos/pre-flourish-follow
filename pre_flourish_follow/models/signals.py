@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from edc_constants.constants import YES, NONE
+from edc_constants.constants import YES
 
 from ..models.worklist import PreFlourishWorkList
 from .home_visit_models import PreFlourishInPersonLog, PreFlourishInPersonContactAttempt
@@ -23,22 +23,20 @@ def cal_log_entry_on_post_save(sender, instance, using, raw, **kwargs):
         except PreFlourishWorkList.DoesNotExist:
             pass
         else:
-            if instance.phone_num_success \
-                and 'none_of_the_above' not in instance.phone_num_success \
-                and instance.has_biological_child == YES:
-                    
+            if instance.phone_num_success and 'none_of_the_above' not in instance.phone_num_success:
                 work_list.is_called = True
                 work_list.called_datetime = instance.call_datetime
-                work_list.user_modified=instance.user_modified
+                work_list.user_modified = instance.user_modified
                 work_list.save()
-        
+
         # Create or update a booking
         SubjectLocator = django_apps.get_model(
             'flourish_caregiver.caregiverlocator')
         if instance.appt == YES:
             try:
                 locator = SubjectLocator.objects.filter(
-                    study_maternal_identifier=instance.study_maternal_identifier).latest('report_datetime')
+                    study_maternal_identifier=instance.study_maternal_identifier).latest(
+                        'report_datetime')
             except SubjectLocator.DoesNotExist:
                 return None
             else:
@@ -56,7 +54,7 @@ def cal_log_entry_on_post_save(sender, instance, using, raw, **kwargs):
                     booking.booking_date = instance.appt_date
                     booking.appt_type = instance.appt_type
                     booking.save()
-        
+
         # Add user to Recruiters group
         try:
             recruiters_group = Group.objects.get(name='Recruiters')
@@ -69,7 +67,7 @@ def cal_log_entry_on_post_save(sender, instance, using, raw, **kwargs):
                 raise ValueError(f'The user {instance.user_created}, does not exist.')
             else:
                 if not User.objects.filter(username=instance.user_created,
-                                       groups__name='Recruiters').exists():
+                                           groups__name='Recruiters').exists():
                     recruiters_group.user_set.add(user)
 
 
@@ -98,7 +96,7 @@ def worklist_on_post_save(sender, instance, using, raw, **kwargs):
                 raise ValueError(f'The user {instance.user_created}, does not exist.')
             else:
                 if not User.objects.filter(username=instance.user_created,
-                                       groups__name=app_config.assignable_users_group).exists():
+                                           groups__name=app_config.assignable_users_group).exists():
                     assignable_users_group.user_set.add(user)
 
 
@@ -114,5 +112,5 @@ def in_person_contact_attempt_on_post_save(sender, instance, using, raw, **kwarg
         else:
             if 'none_of_the_above' not in instance.successful_location:
                 work_list.visited = True
-                work_list.user_modified=instance.user_modified
+                work_list.user_modified = instance.user_modified
                 work_list.save()
