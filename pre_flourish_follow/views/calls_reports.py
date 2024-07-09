@@ -1,14 +1,17 @@
-from datetime import timedelta
-
+import pandas as pd
+import pytz
+import plotly.express as px
+from plotly.offline import plot
 from django.apps import apps as django_apps
-from django.db.models import Avg, Count, ExpressionWrapper, F, Max, Q
-from django.db.models.functions import TruncDay
-from django.forms import DurationField
 from django.views.generic import TemplateView
 from edc_base import get_utcnow
 from edc_base.view_mixins import EdcBaseViewMixin
 from edc_constants.constants import NO, OTHER, YES
 from edc_navbar import NavbarViewMixin
+
+from pre_flourish.helper_classes.utils import is_flourish_eligible
+
+tz = pytz.timezone('Africa/Gaborone')
 
 
 class CallsReports(EdcBaseViewMixin, NavbarViewMixin, TemplateView):
@@ -20,6 +23,13 @@ class CallsReports(EdcBaseViewMixin, NavbarViewMixin, TemplateView):
     log_model = 'pre_flourish_follow.preflourishlog'
     log_entry_model = 'pre_flourish_follow.preflourishlogentry'
     worklist_model = 'pre_flourish_follow.preflourishworklist'
+    consent_model = 'pre_flourish.preflourishconsent'
+    screening_model = 'pre_flourish.preflourishsubjectscreening'
+    flourish_consent_model = 'flourish_caregiver.caregiverchildconsent'
+    contact_model = 'pre_flourish.preflourishcontact'
+
+    # Variable for Pre-flourish to Flourish enrolment report
+    pf_fl_enrolment = []
 
     @property
     def calls_model_cls(self):
@@ -41,217 +51,99 @@ class CallsReports(EdcBaseViewMixin, NavbarViewMixin, TemplateView):
     def all_log_entries(self):
         return self.log_entry_model_cls.objects.all()
 
+    @property
+    def screening_model_cls(self):
+        return django_apps.get_model(self.screening_model)
+
+    @property
+    def consent_model_cls(self):
+        return django_apps.get_model(self.consent_model)
+
+    @property
+    def flourish_consent_model_cls(self):
+        return django_apps.get_model(self.flourish_consent_model)
+
+    @property
+    def contact_model_cls(self):
+        return django_apps.get_model(self.contact_model)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            'report_data': self.report_data,
-            'contact_attempts_report': self.generate_contact_attempts_report,
-            'appointment_scheduling_report': self.generate_appointment_scheduling_report,
-            'participant_demographics_report':
-                self.generate_participant_demographics_report,
-            'final_contact_report': self.generate_final_contact_report,
             'contact_attempts': self.get_contact_attempts_data,
-            'assignments_report': self.generate_assignments_report,
-            'activity_over_time_report': self.generate_activity_over_time_report,
-            'subject_follow_up_status_report':
-                self.generate_subject_follow_up_status_report,
-            'maternal_follow_up_status_report':
-                self.generate_maternal_follow_up_status_report,
-            'overdue_assignments_report': self.generate_overdue_assignments_report,
-            'user_performance_report': self.generate_user_performance_report,
             'eligibility_report': self.generate_eligibility_report,
+            'enrolment_report': self.generate_enrolment_report,
+            'pf_fl_enrolment_table': self.pf_fl_enrolment_df.to_html(
+                classes=['table', 'table-striped'],
+                table_id='pf_fl_enrolment_df',
+                border=0,
+                index=False)
         })
         return context
 
     @property
-    def report_data(self):
-        report_data = []
-
-        for log_entry in self.all_log_entries:
-            report_data.append({
-                'subject_identifier': log_entry.subject_identifier,
-                'screening_identifier': log_entry.screening_identifier,
-                'study_maternal_identifier': log_entry.study_maternal_identifier,
-                'prev_study': log_entry.prev_study,
-                'call_datetime': log_entry.call_datetime,
-                'phone_num_type': log_entry.phone_num_type,
-                'phone_num_success': log_entry.phone_num_success,
-                'has_biological_child': log_entry.has_biological_child,
-                'appt': log_entry.appt,
-                'appt_type': log_entry.appt_type,
-                'appt_date': log_entry.appt_date,
-                'appt_grading': log_entry.appt_grading,
-                'appt_location': log_entry.appt_location,
-                'delivered': log_entry.delivered,
-                'may_call': log_entry.may_call,
-                'home_visit': log_entry.home_visit,
-                'final_contact': log_entry.final_contact,
-            })
-
-        return report_data
-
-    @property
-    def generate_contact_attempts_report(self):
-        total_attempts = self.log_entry_model_cls.objects.count()
-        successful_attempts = self.log_entry_model_cls.objects.filter(
-            phone_num_success__isnull=False).count()
-        unsuccessful_reasons = self.log_entry_model_cls.objects.values(
-            'cell_contact_fail').annotate(count=Count('cell_contact_fail')).order_by(
-            '-count')
-        return {
-            'total_attempts': total_attempts,
-            'successful_attempts': successful_attempts,
-            'unsuccessful_reasons': list(unsuccessful_reasons)
-        }
-
-    @property
-    def generate_appointment_scheduling_report(self):
-        willing_to_schedule = self.log_entry_model_cls.objects.filter(
-            appt__in=[YES]).count()
-        unwilling_to_schedule = self.log_entry_model_cls.objects.filter(
-            appt__in=[NO]).count()
-        reasons_unwilling = self.log_entry_model_cls.objects.values(
-            'appt_reason_unwilling__name').annotate(
-            count=Count('appt_reason_unwilling')).order_by('-count')
-        upcoming_appointments = self.log_entry_model_cls.objects.filter(
-            appt_date__gte=get_utcnow()).values('appt_date', 'appt_type')
-        return {
-            'willing_to_schedule': willing_to_schedule,
-            'unwilling_to_schedule': unwilling_to_schedule,
-            'reasons_unwilling': list(reasons_unwilling),
-            'upcoming_appointments': list(upcoming_appointments)
-        }
-
-    @property
-    def generate_participant_demographics_report(self):
-        by_maternal_identifier = self.log_entry_model_cls.objects.values(
-            'study_maternal_identifier').annotate(
-            count=Count('study_maternal_identifier')).order_by('-count')
-        by_prev_study = self.log_entry_model_cls.objects.values('prev_study').annotate(
-            count=Count('prev_study')).order_by('-count')
-        with_children = self.log_entry_model_cls.objects.filter(
-            has_biological_child=YES).count()
-        return {
-            'by_maternal_identifier': list(by_maternal_identifier),
-            'by_prev_study': list(by_prev_study),
-            'with_children': with_children
-        }
-
-    @property
-    def generate_final_contact_report(self):
-        final_contact_made = self.log_entry_model_cls.objects.filter(
-            final_contact=YES).count()
-        available_for_contact = self.log_entry_model_cls.objects.filter(
-            final_contact=NO).count()
-        return {
-            'final_contact_made': final_contact_made,
-            'available_for_contact': available_for_contact
-        }
-
-    @property
     def get_contact_attempts_data(self):
-        successful_calls = self.log_entry_model_cls.objects.filter(
-            phone_num_success__isnull=False).count()
-        failed_calls = self.log_entry_model_cls.objects.exclude(
-            phone_num_success__isnull=False).count()
-
-        screening_appointments = self.log_entry_model_cls.objects.filter(
-            appt_type='screening').count()
-        re_call_appointments = self.log_entry_model_cls.objects.filter(
-            appt_type='re_call').count()
+        successful_calls = self.worklist_model_cls.objects.filter(
+            is_called=True).count()
 
         return {
-            'successful_calls': successful_calls,
-            'failed_calls': failed_calls,
-            'screening_appointments': screening_appointments,
-            're_call_appointments': re_call_appointments,
-        }
+            'successful_calls': successful_calls, }
 
-    @property
-    def generate_assignments_report(self):
-        return self.worklist_model_cls.objects.values('assigned').annotate(
-            total=Count('id'),
-            total_called=Count('is_called', filter=Q(is_called=True)),
-            total_visited=Count('visited', filter=Q(visited=True)),
-            total_consented=Count('consented', filter=Q(consented=True))
-        )
-
-    @property
-    def generate_activity_over_time_report(self):
-        return self.worklist_model_cls.objects.annotate(
-            date=TruncDay('report_datetime')
-        ).values('date').annotate(
-            total=Count('id'),
-            total_called=Count('is_called', filter=Q(is_called=True)),
-            total_visited=Count('visited', filter=Q(visited=True)),
-            total_consented=Count('consented', filter=Q(consented=True))
-        )
-
-    @property
-    def generate_subject_follow_up_status_report(self):
-        return self.worklist_model_cls.objects.values('subject_identifier').annotate(
-            last_report_datetime=Max('report_datetime'),
-            is_called=Max('is_called'),
-            last_called_datetime=Max('called_datetime'),
-            visited=Max('visited'),
-            consented=Max('consented')
-        )
-
-    @property
-    def generate_maternal_follow_up_status_report(self):
-        return self.worklist_model_cls.objects.values(
-            'study_maternal_identifier').annotate(
-            last_report_datetime=Max('report_datetime'),
-            is_called=Max('is_called'),
-            last_called_datetime=Max('called_datetime'),
-            visited=Max('visited'),
-            consented=Max('consented')
-        )
-
-    @property
-    def generate_overdue_assignments_report(self):
-        overdue_threshold = timedelta(days=30)
-        return self.worklist_model_cls.objects.filter(
-            date_assigned__lte=get_utcnow() - overdue_threshold,
-            visited=False
-        ).annotate(
-            days_overdue=ExpressionWrapper(get_utcnow() - F('date_assigned'),
-                                           output_field=DurationField())
-        )
-
-    @property
-    def generate_user_performance_report(self):
-        return self.worklist_model_cls.objects.exclude(
-            date_assigned__isnull=True
-        ).annotate(
-            time_to_call=ExpressionWrapper(F('called_datetime') - F('date_assigned'),
-                                           output_field=DurationField())
-        ).values('assigned').annotate(
-            average_time_to_call=Avg('time_to_call')
-        )
+    def get_latest_model_obj(self, model_cls, query_attr, query_value,
+                             order_by):
+        latest_obj = model_cls.objects.filter(
+            **{f'{query_attr}': query_value}).order_by(f'-{order_by}').first()
+        return latest_obj
 
     @property
     def generate_eligibility_report(self):
-        eligible_with_child = self.log_entry_model_cls.objects.filter(
-            has_biological_child=YES).count()
-        ineligible_no_child = self.log_entry_model_cls.objects.filter(
-            has_biological_child=NO).count()
+        study_maternal_idxs = self.worklist_model_cls.objects.filter(
+            is_called=True).values_list(
+                'study_maternal_identifier', flat=True)
+        eligible_with_child = 0
+        ineligible_no_child = 0
+        willing_to_schedule = 0
+        not_willing_to_schedule = 0
+        still_thinking_to_schedule = 0
+        screening_appointments = 0
+        recall_appointments = 0
+        other_appointments = 0
+        scheduled_appt = 0
+        eligible_pending_fu = 0
+        for study_idx in study_maternal_idxs:
+            model_obj = self.get_latest_model_obj(
+                self.log_entry_model_cls, 'study_maternal_identifier',
+                study_idx, 'call_datetime',)
+            if getattr(model_obj, 'has_child', None) == YES:
+                eligible_with_child += 1
+            if getattr(model_obj, 'has_child', None) == NO:
+                ineligible_no_child += 1
+            if getattr(model_obj, 'appt', None) == YES:
+                willing_to_schedule += 1
+            if getattr(model_obj, 'appt', None) == NO:
+                not_willing_to_schedule += 1
+            if getattr(model_obj, 'appt', None) == 'thinking':
+                still_thinking_to_schedule += 1
+            if getattr(model_obj, 'appt_type', None) == 'screening':
+                screening_appointments += 1
+            if getattr(model_obj, 'appt_type', None) == 're_call':
+                recall_appointments += 1
+            if getattr(model_obj, 'appt_type', None) == OTHER:
+                other_appointments += 1
+            appt_date = getattr(model_obj, 'appt_date', None)
+            if appt_date and appt_date >= get_utcnow().date():
+                scheduled_appt += 1
 
-        willing_to_schedule = self.log_entry_model_cls.objects.filter(appt=YES).count()
-        not_willing_to_schedule = self.log_entry_model_cls.objects.filter(
-            appt=NO).count()
-        still_thinking_to_schedule = self.log_entry_model_cls.objects.filter(
-            appt='thinking').count()
+            phone_num_success = getattr(
+                model_obj, 'phone_num_success', None)
+            may_call = getattr(model_obj, 'may_call', None)
 
-        screening_appointments = self.log_entry_model_cls.objects.filter(
-            appt_type='Screening').count()
-        recall_appointments = self.log_entry_model_cls.objects.filter(
-            appt_type='Re-call').count()
-        other_appointments = self.log_entry_model_cls.objects.filter(
-            appt_type=OTHER).count()
+            if 'none_of_the_above' in phone_num_success and may_call == YES:
+                eligible_pending_fu += 1
 
         return {
             'eligible_with_child': eligible_with_child,
+            'eligible_pending_fu': eligible_pending_fu,
             'ineligible_no_child': ineligible_no_child,
             'willing_to_schedule': willing_to_schedule,
             'not_willing_to_schedule': not_willing_to_schedule,
@@ -259,4 +151,67 @@ class CallsReports(EdcBaseViewMixin, NavbarViewMixin, TemplateView):
             'screening_appointments': screening_appointments,
             'recall_appointments': recall_appointments,
             'other_appointments': other_appointments,
+            'scheduled_appt': scheduled_appt
         }
+
+    @property
+    def generate_enrolment_report(self):
+        screened = self.screening_model_cls.objects.count()
+        consents = self.consent_model_cls.objects.all()
+        child_consents_count = 0
+        fl_eligible = 0
+        fl_consented = 0
+        fl_scheduled_count = 0
+
+        for consent in consents:
+            child_consents = consent.preflourishcaregiverchildconsent_set.values_list(
+                'subject_identifier', flat=True)
+            child_consents = list(set(child_consents))
+            child_consents_count += len(child_consents)
+
+            for child_consent in child_consents:
+                fl_enrolment_dt = None
+                fl_scheduled_dt = None
+                pf_enrolment_dt = consent.preflourishcaregiverchildconsent_set.filter(
+                    subject_identifier=child_consent).earliest(
+                        'consent_datetime').consent_datetime.astimezone(tz).date()
+                eligible, _ = is_flourish_eligible(child_consent)
+                if eligible:
+                    fl_eligible += 1
+                fl_consent = self.flourish_consent_model_cls.objects.filter(
+                    study_child_identifier=child_consent)
+                if fl_consent.exists():
+                    fl_consented += 1
+                    fl_enrolment_dt = fl_consent.earliest(
+                        'consent_datetime').consent_datetime.astimezone(tz).date()
+
+                fl_enrol_scheduled = self.contact_model_cls.objects.filter(
+                    subject_identifier=child_consent,
+                    appt_date__gte=get_utcnow().date())
+                if fl_enrol_scheduled.exists():
+                    fl_scheduled_count += 1
+                    fl_scheduled_dt = fl_enrol_scheduled.latest(
+                        'appt_date').appt_date
+                self.pf_fl_enrolment.append(
+                    {'subject_identifier': child_consent,
+                     'pf_enrolment_dt': pf_enrolment_dt,
+                     'fl_enrolment_dt': fl_enrolment_dt,
+                     'fl_scheduled_dt': fl_scheduled_dt})
+
+        return {'screened': screened,
+                'consented': consents.count(),
+                'child_consents_count': child_consents_count,
+                'flourish_eligible': fl_eligible,
+                'fl_enrol_scheduled': fl_scheduled_count,
+                'flourish_consented': fl_consented}
+
+    @property
+    def pf_fl_enrolment_df(self):
+        df = pd.DataFrame(
+            self.pf_fl_enrolment, columns=['subject_identifier', 'pf_enrolment_dt',
+                                           'fl_enrolment_dt', 'fl_scheduled_dt'])
+        df['fl_enrolment_dt'] = pd.to_datetime(df['fl_enrolment_dt'])
+        df['pf_enrolment_dt'] = pd.to_datetime(df['pf_enrolment_dt'])
+
+        df['enrolment_dt_diff'] = (df['fl_enrolment_dt'] - df['pf_enrolment_dt']).dt.days
+        return df.fillna('')
