@@ -194,8 +194,8 @@ class CallsReports(EdcBaseViewMixin, NavbarViewMixin, TemplateView):
                         'appt_date').appt_date
                 self.pf_fl_enrolment.append(
                     {'subject_identifier': child_consent,
-                     'pf_enrolment_dt': pf_enrolment_dt,
-                     'fl_enrolment_dt': fl_enrolment_dt,
+                     'pf_consent_dt': pf_enrolment_dt,
+                     'fl_consent_dt': fl_enrolment_dt,
                      'fl_scheduled_dt': fl_scheduled_dt})
 
         return {'screened': screened,
@@ -208,10 +208,10 @@ class CallsReports(EdcBaseViewMixin, NavbarViewMixin, TemplateView):
     @property
     def pf_fl_enrolment_df(self):
         df = pd.DataFrame(
-            self.pf_fl_enrolment, columns=['subject_identifier', 'pf_enrolment_dt',
-                                           'fl_enrolment_dt', 'fl_scheduled_dt'])
-        df['fl_enrolment_dt'] = pd.to_datetime(df['fl_enrolment_dt'])
-        df['pf_enrolment_dt'] = pd.to_datetime(df['pf_enrolment_dt'])
+            self.pf_fl_enrolment, columns=['subject_identifier', 'pf_consent_dt',
+                                           'fl_consent_dt', 'fl_scheduled_dt'])
+        df['fl_consent_dt'] = pd.to_datetime(df['fl_consent_dt'])
+        df['pf_consent_dt'] = pd.to_datetime(df['pf_consent_dt'])
 
-        df['enrolment_dt_diff'] = (df['fl_enrolment_dt'] - df['pf_enrolment_dt']).dt.days
+        df['consent_dt_diff'] = (df['fl_consent_dt'] - df['pf_consent_dt']).dt.days
         return df.fillna('')
