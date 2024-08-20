@@ -59,8 +59,10 @@ LOCATION_SUCCESS = (
 
 MAY_CALL = (
     (YES, 'Yes, we may continue to contact the participant.'),
-    ('no_flourish_study_calls', 'No, the participant has asked to not be contacted about the FLOURISH study.'),
-    ('no_any_bhp_study_calls', 'No, the participant has asked not to be contacted about ANY BHP study'),
+    ('no_flourish_study_calls',
+     'No, the participant has asked to not be contacted about the FLOURISH study.'),
+    ('no_any_bhp_study_calls',
+     'No, the participant has asked not to be contacted about ANY BHP study'),
     (NOT_APPLICABLE, 'Not Applicable')
 )
 

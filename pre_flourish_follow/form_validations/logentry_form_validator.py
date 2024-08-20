@@ -41,14 +41,6 @@ class LogEntryFormValidator(ContactFormValidator, FormValidator):
         self.validate_successful_call()
 
     def validate_appointment(self):
-        not_app_fields = ['has_biological_child', ]
-
-        for field in not_app_fields:
-            self.not_applicable_if(
-                ['none_of_the_above'],
-                field='phone_num_success',
-                field_applicable=field)
-
         self.applicable_if(
             YES,
             field='has_child',
@@ -101,8 +93,8 @@ class LogEntryFormValidator(ContactFormValidator, FormValidator):
                 {'may_call': 'Q16 - Participant NOT willing to schedule an appointment'})
 
     def validate_successful_call(self):
-        fields = ['willing_consent', 'has_child', 'caregiver_age', 'caregiver_omang',
-                  'willing_assent', 'study_interest', ]
+        fields = ['willing_consent', 'has_child', 'caregiver_age',
+                  'caregiver_omang', 'willing_assent', 'study_interest', ]
 
         for field in fields:
             self.not_required_if(

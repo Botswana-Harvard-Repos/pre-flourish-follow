@@ -12,7 +12,7 @@ flourish_follow.append_item(
                url_name='pre_flourish_follow:home_url'))
 
 flourish_follow.append_item(
-    NavbarItem(name='Calls Reports',
+    NavbarItem(name='calls_reports',
                label='Pre-Flourish Calls Reports',
                fa_icon='fa-cogs',
                url_name='pre_flourish_follow:calls_reports_url'))
