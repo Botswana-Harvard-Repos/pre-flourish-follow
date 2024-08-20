@@ -23,6 +23,7 @@ from ..forms import (
     SingleReAssignParticipantForm)
 from ..models import PreFlourishFollowExportFile as FollowExportFile
 from ..models import PreFlourishWorkList as WorkList
+from .filters import AssignmentsViewFilters
 
 from .download_report_mixin import DownloadReportMixin
 
@@ -35,6 +36,8 @@ class HomeView(
     template_name = 'pre_flourish_follow/home.html'
     navbar_name = 'pre_flourish_follow'
     navbar_selected_item = 'assignments'
+
+    view_filters = AssignmentsViewFilters()
 
     def get_success_url(self):
         return reverse('pre_flourish_follow:home_url')
@@ -238,7 +241,8 @@ class HomeView(
             reset_assignment_form=reset_assignment_form,
             re_assign_participant_form=re_assign_participant_form,
             assign_users=self.assign_users,
-            assignments_downloads=assignments_downloads)
+            assignments_downloads=assignments_downloads,
+            view_filters=self.view_filters.filters)
         return context
 
     @method_decorator(login_required)

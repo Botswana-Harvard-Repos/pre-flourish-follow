@@ -1,4 +1,3 @@
-from binascii import Incomplete
 from edc_dashboard.listboard_filter import ListboardFilter, ListboardViewFilters
 from datetime import timedelta
 import datetime
@@ -137,3 +136,26 @@ class ScreeningListboardViewFilters(ListboardViewFilters):
         label='Cancelled',
         position=6,
         lookup={'appt_status': 'cancelled'})
+
+
+class AssignmentsViewFilters:
+
+    @property
+    def filters(self):
+        _all = dict(
+            lookup={"": ""},
+            label='All', )
+
+        called = dict(
+            lookup={"Called status": "true"},
+            label='Called', )
+
+        uncalled = dict(
+            lookup={"Called status": "false"},
+            label='Not Called', )
+
+        visited = dict(
+            lookup={"Visited status": "true"},
+            label='Visited', )
+
+        return [_all, called, uncalled, visited]

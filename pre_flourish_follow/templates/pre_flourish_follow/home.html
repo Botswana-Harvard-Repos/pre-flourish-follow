@@ -5,23 +5,8 @@
 {% load follow_extras %}
 {% block extra-scripts %}
 	{{ block.super }}
-	<script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
-	<script src="https://cdn.datatables.net/1.10.13/js/dataTables.bootstrap.min.js"></script>
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.13/css/dataTables.bootstrap.min.css">
-	<script type="text/javascript">
-	$(document).ready(function() {
-	    $('#item-identifiers').DataTable();
-	} );
-	</script>
-
-	<script type="text/javascript">
-
-	  jQuery(function() {
-	    jQuery('#users').change(function() {
-	        this.form.submit();
-	    });
-	});
-	</script>
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css">
+	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
 {% endblock extra-scripts %}
 
 
@@ -97,60 +82,122 @@
 				      
 				    </div>
 				  </div>
-				
 				|
 				<a href="{% url 'pre_flourish_follow:home_url' %}?assignments_export=yes" class="btn btn-sm btn-info">Export</a>
 			</div>
-			<table id="item-identifiers" class="table table-striped table-bordered" cellspacing="0" width="100%">
-				<thead>
-					<tr>
-						<th>Username</th>
-						<th>Participants</th>
-						<th>Called status</th>
-						<th>Visited status</th>
-						<th>Re-Assign</th>
-					</tr>
-				</thead>
-				<tfoot>
-					<tr>
-						<th>Username</th>
-						<th>Participants</th>
-						<th>Called status</th>
-						<th>Visited status</th>
-						<th>Re-Assign</th>
-					</tr>
-				</tfoot>
-				<tbody>
-					{% for assignments in participants_assignments %}
-					<tr>
-				 		<td>{{ assignments.0 }}</td>
-				 		<td>{{ assignments.1 }}</td>
-				 		<td>{{ assignments.2 }}</td>
-				 		<td>{{ assignments.3 }}</td>
-				 		<td>
-				 			{% if request.user|has_group:"assign manager" %}
-				 			<form action="{% url 'pre_flourish_follow:home_url' %}" method="post">
-				 				{% csrf_token %}
-							    <select name="reassign_name" id="users">
-							    	{% for username in assign_users %}
-							        <option value={{ username.0 }}>{{ username.1 }}</option>
-							        {% endfor %}
-							    </select>
-							    <input type="hidden" id="username_from" name="username_from" value={{ assignments.0 }}>
-							    <input type="hidden" id="study_maternal_identifier" name="study_maternal_identifier" value={{ assignments.1 }}>
-							</form>
-							{% else %}
-								-------
-							{% endif %}
-				 		</td>
-					</tr>
-					{% endfor %}
-				</tbody>
-			</table>
+			<div id="datatable-container">
+				<div class="btn-group" id="customFilter" style="margin-left: 10px; padding: 5px">
+	                 <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+	                     <i class="fa fa-filter fa-sm"></i>&nbsp;<span class="caret"></span>
+	                 </button>
+	
+	                 <div class="dropdown-menu" role="menu">
+	                   {% for view_filter in view_filters %}
+	                     <li>
+	                        <a class="dropdown-item" href="#" data-filter="{{ view_filter.lookup }}">
+	                            {{ view_filter.label }}
+	                        </a>
+	                     </li>
+	                   {% endfor %}
+	                 </div>
+	      		</div>
+
+				<table id="item_identifiers" class="display" style="width:100%;">
+					<thead>
+						<tr>
+							<th>Username</th>
+							<th>Participants</th>
+							<th>Called status</th>
+							<th>Visited status</th>
+							<th>Re-Assign</th>
+						</tr>
+					</thead>
+					<tfoot>
+						<tr>
+							<th>Username</th>
+							<th>Participants</th>
+							<th>Called status</th>
+							<th>Visited status</th>
+							<th>Re-Assign</th>
+						</tr>
+					</tfoot>
+					<tbody>
+						{% for assignments in participants_assignments %}
+						<tr>
+					 		<td>{{ assignments.0 }}</td>
+					 		<td>{{ assignments.1 }}</td>
+					 		<td>{{ assignments.2 }}</td>
+					 		<td>{{ assignments.3 }}</td>
+					 		<td>
+					 			{% if request.user|has_group:"assign manager" %}
+					 			<form action="{% url 'pre_flourish_follow:home_url' %}" method="post">
+					 				{% csrf_token %}
+								    <select name="reassign_name" id="users">
+								    	{% for username in assign_users %}
+								        <option value={{ username.0 }}>{{ username.1 }}</option>
+								        {% endfor %}
+								    </select>
+								    <input type="hidden" id="username_from" name="username_from" value={{ assignments.0 }}>
+								    <input type="hidden" id="study_maternal_identifier" name="study_maternal_identifier" value={{ assignments.1 }}>
+								</form>
+								{% else %}
+									-------
+								{% endif %}
+					 		</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
 		{% endif %}
 		</div>
-		</div>
-		
+		</div>	
 	</div>
 </div>
+
+<script type="text/javascript">
+	$(document).ready(function() {
+	    var table = $('#item_identifiers').DataTable({
+	    	dom: 'Bfrtip',
+	    });
+
+	    $('#item_identifiers tbody').on('change', 'select#users', function() {
+	        this.form.submit();
+	    });
+
+	    // Function to get the column index by column header name
+	    function getColumnIndexByName(columnName) {
+	        var columnIndex = -1;
+	        table.columns().every(function(index) {
+	            if ($(table.column(index).header()).text() === columnName) {
+	                columnIndex = index;
+	            }
+	        });
+	        return columnIndex;
+	    }
+
+	 	// Add event listener to the dropdown items
+	    $('#customFilter .dropdown-item').on('click', function() {
+	        var filterStr = $(this).data('filter');
+	        var filterObj = JSON.parse(filterStr.replaceAll("'", "\""));
+  
+	        // Clear previous filters
+	        table.columns().search('');
+
+	        // Apply new filters
+	        for (var columnName in filterObj) {
+	            if (filterObj.hasOwnProperty(columnName)) {
+	                var columnIndex = getColumnIndexByName(columnName);
+	                if (columnIndex !== -1) {
+	                    table.columns(columnIndex).search(filterObj[columnName]);
+	                }
+	            }
+	        }
+	        table.draw();
+	    });
+
+	    // Move the custom filter input next to the search input
+	    $('#item_identifiers_filter').append($('#customFilter'));
+	});
+</script>
 {% endblock main %}
